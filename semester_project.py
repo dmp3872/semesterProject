@@ -13,6 +13,7 @@ params: none
 return: none
 """
 def main():
+    # open pointCloud and view
     ply_point_cloud = o3d.data.PLYPointCloud()
     pcd = o3d.io.read_point_cloud('dataset\\PointClouds\\0.pcd')
     print(np.asarray(pcd.points))
