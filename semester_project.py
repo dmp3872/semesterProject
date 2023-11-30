@@ -90,5 +90,11 @@ def main():
     #                               lookat=[2.6172, 2.0475, 1.532],
     #                               up=[-0.0694, -0.9768, 0.2024])
 
+def visualize_clusters(pcd, labels):
+    # Visualize clustered dynamic objects
+    colors = plt.get_cmap("tab10")(labels / (labels.max() if labels.max() > 0 else 1))
+    pcd.colors = o3d.utility.Vector3dVector(colors[:, :3])
+    o3d.visualization.draw_geometries([pcd])
+
 if __name__ == "__main__":
     main()
