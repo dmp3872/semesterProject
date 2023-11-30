@@ -28,8 +28,10 @@ def main():
     pcdlist = []
     directory = "dataset\\PointClouds"
 
-    for file in os.listdir(directory):
-        path = os.path.join(directory, file)
+    dir = os.listdir(directory)
+
+    for i in range(len(dir) - 1):
+        path = os.path.join(directory, "{0}.pcd".format(i))
         if os.path.isfile(path):
             pcdlist.append(path)
 
@@ -71,7 +73,7 @@ def main():
 
         t_dist = []
         for j in range(len(distances)):
-            if distances[j] > 0.05:
+            if distances[j] > 0.001:
                 t_dist.append(distances[j])
                 outpoints.append([pcd.points[j][0], pcd.points[j][1], pcd.points[j][2]])
 
