@@ -83,6 +83,15 @@ def main():
         vis.poll_events()
         vis.update_renderer()
 
+
+    pcd = o3d.io.read_point_cloud("dataset\\PointClouds\\482.pcd")
+
+    plane_model, inliers = pcd.segment_plane(distance_threshold=0.6, ransac_n=5, num_iterations=1000)
+    pcd = pcd.select_by_index(inliers, invert=True)
+
+    with o3d.utility.VerbosityContextManager(o3d.utility.VerbosityLevel.Debug) as cm:
+        labels = np.array(pcd.cluster_dbscan(eps=.6, min_points=8, print_progress=True))
+
     # print(np.asarray(pcd0.points))
     # o3d.visualization.draw_geometries([pcd0],
     #                               zoom=0.3412,
