@@ -34,20 +34,22 @@ def main():
     geometry.points = o3d.io.read_point_cloud(pcdlist[0]).points
     # vis.add_geometry(geometry)
 
-    prevBBs = []
+    prevBBs = {}
 
-    BBox_X_Min = [0]
-    BBox_X_Max = [0]
-    BBox_Y_Min = [0]
-    BBox_Y_Max = [0]
-    BBox_Z_Min = [0]
-    BBox_Z_Max = [0]
-    BBox_X = [0]
-    BBox_Y = [0]
-    BBox_Z = [0]
-    Vec_X = [0]
-    Vec_Y = [0]
-    Vec_Z = [0]
+    BBox_X_Min = {}
+    BBox_X_Max = {}
+    BBox_Y_Min = {}
+    BBox_Y_Max = {}
+    BBox_Z_Min = {}
+    BBox_Z_Max = {}
+    BBox_X = {}
+    BBox_Y = {}
+    BBox_Z = {}
+    Vec_X = {}
+    Vec_Y = {}
+    Vec_Z = {}
+
+    freeid = 0
 
     for i in range(len(pcdlist) - 1):
 
@@ -83,6 +85,11 @@ def main():
 
         writer.writerow(["vehicle_id","position_x","position_y","position_z","mvec_x","mvec_y","mvec_z","bbox_x_min","bbox_x_max","bbox_y_min","bbox_y_max","bbox_z_min","bbox_z_max"])
 
+        center_poses = []
+        if len(prevBBs) > 0:
+            for key in prevBBs.keys():
+                center_poses.append([key, prevBBs.get(key).get_center()])
+
         for label in unique_labels:
             cluster_indices = np.where(labels == label)[0]
             cluster_points = points[cluster_indices]
@@ -103,35 +110,20 @@ def main():
 
             found = False
             id = 0
-            if i != 0:
-                for prev in prevBBs:
-                    prev_center = prev[1].get_center()
-                    if -2 < x - prev_center[0] < 2 and -2 < y - prev_center[1] < 2 and -2 < z - prev_center[2] < 2:
-                        vec_x = x - prev_center[0]
-                        vec_y = y - prev_center[1]
-                        vec_z = z - prev_center[2]
-                        prev[1] = bbox
-                        id = prev[0]
-                        found = True
-                        break
+            if i != 0 and len(center_poses) > 0:
+                _, index = Find_Nearest_Neighbor(bbox.get_center(), center_poses)
+                last_pos = center_poses.pop(index)
+                id = last_pos[0]
+                vec_x = x - last_pos[1][0]
+                vec_y = y - last_pos[1][1]
+                vec_z = z - last_pos[1][2]
+                prevBBs[id] = bbox
+                found = True
 
             if i == 0 or not found:
-                prevBBs.append([len(prevBBs), bbox])
-                id = prevBBs[-1][0]
-
-            while len(BBox_X_Min) < len(prevBBs):
-                BBox_X_Min.append(0)
-                BBox_X_Max.append(0)
-                BBox_Y_Min.append(0)
-                BBox_Y_Max.append(0)
-                BBox_Z_Min.append(0)
-                BBox_Z_Max.append(0)
-                BBox_X.append(0)
-                BBox_Y.append(0)
-                BBox_Z.append(0)
-                Vec_X.append(0)
-                Vec_Y.append(0)
-                Vec_Z.append(0)
+                prevBBs[freeid] = bbox
+                id = freeid
+                freeid += 1
 
             BBox_X_Min[id] = x_min
             BBox_X_Max[id] = x_max
@@ -149,12 +141,17 @@ def main():
             # Add bounding box to visualizer
             # vis.add_geometry(bbox)
 
+        for center in center_poses:
+            id = center[0]
+            prevBBs.pop(id)
+
         # write info to csv
-        for prev in prevBBs:
-            id = prev[0]
-            if id < 6:
-                writer.writerow([id, BBox_X[id], BBox_Y[id], BBox_Z[id], Vec_X[id], Vec_Y[id], Vec_Z[id], 
-                             BBox_X_Min[id], BBox_X_Max[id], BBox_Y_Min[id], BBox_Y_Max[id], BBox_Z_Min[id], BBox_Z_Max[id]])
+        j = 0
+        for id in prevBBs.keys():
+            if j < 6:
+                j += 1
+                writer.writerow([id, BBox_X.get(id), BBox_Y.get(id), BBox_Z.get(id), Vec_X.get(id), Vec_Y.get(id), Vec_Z.get(id), 
+                            BBox_X_Min.get(id), BBox_X_Max.get(id), BBox_Y_Min.get(id), BBox_Y_Max.get(id), BBox_Z_Min.get(id), BBox_Z_Max.get(id)])
 
         csvfile.close()
 
@@ -163,6 +160,21 @@ def main():
         # vis.update_geometry(geometry)
         # vis.poll_events()
         # vis.update_renderer()
+
+def Find_3D_Distance ( pos_a, pos_b ):
+    # Calculate the 3D distance between two points
+    return np.sqrt( (pos_a[0] - pos_b[0])**2 + (pos_a[1] - pos_b[1])**2 + (pos_a[2] - pos_b[2])**2 )
+
+def Find_Nearest_Neighbor ( pose, set_of_poses ):
+    # Find the nearest neighbor to a given pose
+    min_dist = 1000000000000
+    min_index = -1
+    for i in range(len(set_of_poses)):
+        dist = Find_3D_Distance( pose, set_of_poses[i][1] )
+        if dist < min_dist:
+            min_dist = dist
+            min_index = i
+    return min_dist, min_index
 
 if __name__ == "__main__":
     main()
