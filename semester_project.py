@@ -77,10 +77,15 @@ def main():
                 t_dist.append(distances[j])
                 outpoints.append([pcd.points[j][0], pcd.points[j][1], pcd.points[j][2]])
 
+
         
         # now modify the points of your geometry
         # you can use whatever method suits you best, this is just an example
         geometry.points = o3d.utility.Vector3dVector(outpoints)
+        with o3d.utility.VerbosityContextManager(o3d.utility.VerbosityLevel.Debug) as cm:
+            labels = np.array(geometry.cluster_dbscan(eps=1.4, min_points=5, print_progress=True))
+        colors = plt.get_cmap("tab10")(labels / (labels.max() if labels.max() > 0 else 1))
+        geometry.colors = o3d.utility.Vector3dVector(colors[:, :3])
         vis.update_geometry(geometry)
         vis.poll_events()
         vis.update_renderer()
