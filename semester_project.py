@@ -93,6 +93,13 @@ def main():
         unique_labels = set(labels) - {-1}
         points = np.asarray(geometry.points)
 
+        BBox_X_Min = [0, 0, 0, 0, 0, 0]
+        BBox_X_Max = [0, 0, 0, 0, 0, 0]
+        BBox_Y_Min = [0, 0, 0, 0, 0, 0]
+        BBox_Y_Max = [0, 0, 0, 0, 0, 0]
+        BBox_Z_Min = [0, 0, 0, 0, 0, 0]
+        BBox_Z_Max = [0, 0, 0, 0, 0, 0]
+
         for label in unique_labels:
             cluster_indices = np.where(labels == label)[0]
             cluster_points = points[cluster_indices]
@@ -101,12 +108,24 @@ def main():
             min_bound = np.min(cluster_points, axis=0)
             max_bound = np.max(cluster_points, axis=0)
 
+            x_min, y_min, z_min = min_bound
+            x_max, y_max, z_max = max_bound
+
+            BBox_X_Min[label] = x_min
+            BBox_X_Max[label] = x_max
+            BBox_Y_Min[label] = y_min
+            BBox_Y_Max[label] = y_max
+            BBox_Z_Min[label] = z_min
+            BBox_Z_Max[label] = z_max
+
             # Create bounding box geometry
             bbox = o3d.geometry.AxisAlignedBoundingBox(min_bound, max_bound)
             bbox.color = (1, 0, 0)  # Set color to red
 
             # Add bounding box to visualizer
             vis.add_geometry(bbox)
+
+        frame = i
 
         # Add original point cloud to visualizer
         o3d.geometry.colors = o3d.utility.Vector3dVector(colors[:, :3])
