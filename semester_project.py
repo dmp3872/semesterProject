@@ -88,8 +88,28 @@ def main():
         geometry.points = o3d.utility.Vector3dVector(outpoints)
         with o3d.utility.VerbosityContextManager(o3d.utility.VerbosityLevel.Debug) as cm:
             labels = np.array(geometry.cluster_dbscan(eps=1.6, min_points=5, print_progress=True))
+
         colors = plt.get_cmap("tab10")(labels / (labels.max() if labels.max() > 0 else 1))
-        geometry.colors = o3d.utility.Vector3dVector(colors[:, :3])
+        unique_labels = set(labels) - {-1}
+        points = np.asarray(geometry.points)
+
+        for label in unique_labels:
+            cluster_indices = np.where(labels == label)[0]
+            cluster_points = points[cluster_indices]
+
+            # Calculate bounding box
+            min_bound = np.min(cluster_points, axis=0)
+            max_bound = np.max(cluster_points, axis=0)
+
+            # Create bounding box geometry
+            bbox = o3d.geometry.AxisAlignedBoundingBox(min_bound, max_bound)
+            bbox.color = (1, 0, 0)  # Set color to red
+
+            # Add bounding box to visualizer
+            vis.add_geometry(bbox)
+
+        # Add original point cloud to visualizer
+        o3d.geometry.colors = o3d.utility.Vector3dVector(colors[:, :3])
         vis.update_geometry(geometry)
         vis.poll_events()
         vis.update_renderer()
