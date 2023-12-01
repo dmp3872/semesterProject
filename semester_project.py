@@ -8,7 +8,7 @@ import open3d as o3d
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-import time
+import csv
 
 """
 main:   Runs the program
@@ -57,6 +57,8 @@ def main():
     geometry.points = o3d.io.read_point_cloud(pcdlist[0]).points
     vis.add_geometry(geometry)
 
+    prevBBs = []
+
     for i in range(len(pcdlist) - 1):
 
         pcd = None
@@ -93,15 +95,23 @@ def main():
         unique_labels = set(labels) - {-1}
         points = np.asarray(geometry.points)
 
-        BBox_X_Min = len(unique_labels) * [0]
-        BBox_X_Max = len(unique_labels) * [0]
-        BBox_Y_Min = len(unique_labels) * [0]
-        BBox_Y_Max = len(unique_labels) * [0]
-        BBox_Z_Min = len(unique_labels) * [0]
-        BBox_Z_Max = len(unique_labels) * [0]
-        BBox_X = len(unique_labels) * [0]
-        BBox_Y = len(unique_labels) * [0]
-        BBox_Z = len(unique_labels) * [0]
+        # BBox_X_Min = len(unique_labels) * [0]
+        # BBox_X_Max = len(unique_labels) * [0]
+        # BBox_Y_Min = len(unique_labels) * [0]
+        # BBox_Y_Max = len(unique_labels) * [0]
+        # BBox_Z_Min = len(unique_labels) * [0]
+        # BBox_Z_Max = len(unique_labels) * [0]
+        # BBox_X = len(unique_labels) * [0]
+        # BBox_Y = len(unique_labels) * [0]
+        # BBox_Z = len(unique_labels) * [0]
+        # Vec_X = len(unique_labels) * [0]
+        # Vec_Y = len(unique_labels) * [0]
+        # Vec_Z = len(unique_labels) * [0]
+
+        csvfile =  open('perception_results\\frame_{0}.csv'.format(i), 'w', newline="")
+        writer = csv.writer(csvfile)
+
+        writer.writerow(["vehicle_id","position_x","position_y","position_z","mvec_x","mvec_y","mvec_z","bbox_x_min","bbox_x_max","bbox_y_min","bbox_y_max","bbox_z_min","bbox_z_max"])
 
         for label in unique_labels:
             cluster_indices = np.where(labels == label)[0]
@@ -114,25 +124,49 @@ def main():
             x_min, y_min, z_min = min_bound
             x_max, y_max, z_max = max_bound
 
-            BBox_X_Min[label] = x_min
-            BBox_X_Max[label] = x_max
-            BBox_Y_Min[label] = y_min
-            BBox_Y_Max[label] = y_max
-            BBox_Z_Min[label] = z_min
-            BBox_Z_Max[label] = z_max
-
             # Create bounding box geometry
             bbox = o3d.geometry.AxisAlignedBoundingBox(min_bound, max_bound)
             bbox.color = (1, 0, 0)  # Set color to red
             x, y, z = bbox.get_center()
-            BBox_X[label] = x
-            BBox_Y[label] = y
-            BBox_Z[label] = z
+
+            vec_x, vec_y, vec_z = 0, 0, 0
+
+            found = False
+            if i != 0:
+                for prev in prevBBs:
+                    prev_center = prev.get_center()
+                    if -.05 < x - prev_center[0] < .05 and -.05 < y - prev_center[1] < .05 and -.05 < z - prev_center[2] < .05:
+                        vec_x = x - prev_center[0]
+                        vec_y = y - prev_center[1]
+                        vec_z = z - prev_center[2]
+                        prev = bbox
+                        found = True
+                if not found:
+                    prevBBs.append(bbox)
+                    id = assignID(bbox)
+                    prevBBs.append({id : bbox})
+
+            if i == 0:
+                id = assignID(bbox)
+                prevBBs.append({id : bbox})
+
+            # BBox_X_Min[label] = x_min
+            # BBox_X_Max[label] = x_max
+            # BBox_Y_Min[label] = y_min
+            # BBox_Y_Max[label] = y_max
+            # BBox_Z_Min[label] = z_min
+            # BBox_Z_Max[label] = z_max
+            # BBox_X[label] = x
+            # BBox_Y[label] = y
+            # BBox_Z[label] = z
+
+            # write info to csv
+            writer.writerow([label + 141, x, y, z, vec_x, vec_y, vec_z, x_min, x_max, y_min, z_min, z_max])
 
             # Add bounding box to visualizer
             vis.add_geometry(bbox)
 
-        frame = i
+        csvfile.close()
 
         # Add original point cloud to visualizer
         o3d.geometry.colors = o3d.utility.Vector3dVector(colors[:, :3])
@@ -155,6 +189,9 @@ def main():
     #                               front=[0.4257, -0.2125, -0.8795],
     #                               lookat=[2.6172, 2.0475, 1.532],
     #                               up=[-0.0694, -0.9768, 0.2024])
+
+def assignID(bbox):
+    pass
 
 def visualize_clusters(pcd, labels):
     # Visualize clustered dynamic objects
