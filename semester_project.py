@@ -61,11 +61,15 @@ def main():
 
         pcd = None
         nextpcd = None
-
         if os.path.isfile(pcdlist[i]):
             pcd = o3d.io.read_point_cloud(pcdlist[i])
         if os.path.isfile(pcdlist[i+1]):
             nextpcd = o3d.io.read_point_cloud(pcdlist[i+1])
+
+        # plane_model, inliers = pcd.segment_plane(distance_threshold=0.6, ransac_n=5, num_iterations=1000)
+        # pcd = pcd.select_by_index(inliers, invert=True)
+        # plane_model, inliers = nextpcd.segment_plane(distance_threshold=0.6, ransac_n=5, num_iterations=1000)
+        # nextpcd = pcd.select_by_index(inliers, invert=True)
 
         distances = pcd.compute_point_cloud_distance(nextpcd)
 
@@ -83,7 +87,7 @@ def main():
         # you can use whatever method suits you best, this is just an example
         geometry.points = o3d.utility.Vector3dVector(outpoints)
         with o3d.utility.VerbosityContextManager(o3d.utility.VerbosityLevel.Debug) as cm:
-            labels = np.array(geometry.cluster_dbscan(eps=1.4, min_points=5, print_progress=True))
+            labels = np.array(geometry.cluster_dbscan(eps=1.6, min_points=5, print_progress=True))
         colors = plt.get_cmap("tab10")(labels / (labels.max() if labels.max() > 0 else 1))
         geometry.colors = o3d.utility.Vector3dVector(colors[:, :3])
         vis.update_geometry(geometry)
