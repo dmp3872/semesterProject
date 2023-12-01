@@ -72,7 +72,7 @@ def main():
         # you can use whatever method suits you best, this is just an example
         geometry.points = o3d.utility.Vector3dVector(outpoints)
         with o3d.utility.VerbosityContextManager(o3d.utility.VerbosityLevel.Debug) as cm:
-            labels = np.array(geometry.cluster_dbscan(eps=1.6, min_points=3, print_progress=True))
+            labels = np.array(geometry.cluster_dbscan(eps=2.2, min_points=4, print_progress=False))
 
         colors = plt.get_cmap("tab10")(labels / (labels.max() if labels.max() > 0 else 1))
         unique_labels = set(labels) - {-1}
