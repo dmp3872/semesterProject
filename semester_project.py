@@ -59,6 +59,19 @@ def main():
 
     prevBBs = []
 
+    BBox_X_Min = [0]
+    BBox_X_Max = [0]
+    BBox_Y_Min = [0]
+    BBox_Y_Max = [0]
+    BBox_Z_Min = [0]
+    BBox_Z_Max = [0]
+    BBox_X = [0]
+    BBox_Y = [0]
+    BBox_Z = [0]
+    Vec_X = [0]
+    Vec_Y = [0]
+    Vec_Z = [0]
+
     for i in range(len(pcdlist) - 1):
 
         pcd = None
@@ -79,7 +92,7 @@ def main():
 
         t_dist = []
         for j in range(len(distances)):
-            if distances[j] > 0.001:
+            if distances[j] > 0.005:
                 t_dist.append(distances[j])
                 outpoints.append([pcd.points[j][0], pcd.points[j][1], pcd.points[j][2]])
 
@@ -89,24 +102,11 @@ def main():
         # you can use whatever method suits you best, this is just an example
         geometry.points = o3d.utility.Vector3dVector(outpoints)
         with o3d.utility.VerbosityContextManager(o3d.utility.VerbosityLevel.Debug) as cm:
-            labels = np.array(geometry.cluster_dbscan(eps=1.6, min_points=5, print_progress=True))
+            labels = np.array(geometry.cluster_dbscan(eps=1.6, min_points=3, print_progress=True))
 
         colors = plt.get_cmap("tab10")(labels / (labels.max() if labels.max() > 0 else 1))
         unique_labels = set(labels) - {-1}
         points = np.asarray(geometry.points)
-
-        # BBox_X_Min = len(unique_labels) * [0]
-        # BBox_X_Max = len(unique_labels) * [0]
-        # BBox_Y_Min = len(unique_labels) * [0]
-        # BBox_Y_Max = len(unique_labels) * [0]
-        # BBox_Z_Min = len(unique_labels) * [0]
-        # BBox_Z_Max = len(unique_labels) * [0]
-        # BBox_X = len(unique_labels) * [0]
-        # BBox_Y = len(unique_labels) * [0]
-        # BBox_Z = len(unique_labels) * [0]
-        # Vec_X = len(unique_labels) * [0]
-        # Vec_Y = len(unique_labels) * [0]
-        # Vec_Z = len(unique_labels) * [0]
 
         csvfile =  open('perception_results\\frame_{0}.csv'.format(i), 'w', newline="")
         writer = csv.writer(csvfile)
@@ -132,39 +132,58 @@ def main():
             vec_x, vec_y, vec_z = 0, 0, 0
 
             found = False
+            id = 0
             if i != 0:
                 for prev in prevBBs:
-                    prev_center = prev.get_center()
-                    if -.05 < x - prev_center[0] < .05 and -.05 < y - prev_center[1] < .05 and -.05 < z - prev_center[2] < .05:
+                    prev_center = prev[1].get_center()
+                    if -2 < x - prev_center[0] < 2 and -2 < y - prev_center[1] < 2 and -2 < z - prev_center[2] < 2:
                         vec_x = x - prev_center[0]
                         vec_y = y - prev_center[1]
                         vec_z = z - prev_center[2]
-                        prev = bbox
+                        prev[1] = bbox
+                        id = prev[0]
                         found = True
-                if not found:
-                    prevBBs.append(bbox)
-                    id = assignID(bbox)
-                    prevBBs.append({id : bbox})
+                        break
 
-            if i == 0:
-                id = assignID(bbox)
-                prevBBs.append({id : bbox})
+            if i == 0 or not found:
+                prevBBs.append([len(prevBBs), bbox])
+                id = prevBBs[-1][0]
 
-            # BBox_X_Min[label] = x_min
-            # BBox_X_Max[label] = x_max
-            # BBox_Y_Min[label] = y_min
-            # BBox_Y_Max[label] = y_max
-            # BBox_Z_Min[label] = z_min
-            # BBox_Z_Max[label] = z_max
-            # BBox_X[label] = x
-            # BBox_Y[label] = y
-            # BBox_Z[label] = z
+            while len(BBox_X_Min) < len(prevBBs):
+                BBox_X_Min.append(0)
+                BBox_X_Max.append(0)
+                BBox_Y_Min.append(0)
+                BBox_Y_Max.append(0)
+                BBox_Z_Min.append(0)
+                BBox_Z_Max.append(0)
+                BBox_X.append(0)
+                BBox_Y.append(0)
+                BBox_Z.append(0)
+                Vec_X.append(0)
+                Vec_Y.append(0)
+                Vec_Z.append(0)
 
-            # write info to csv
-            writer.writerow([label + 141, x, y, z, vec_x, vec_y, vec_z, x_min, x_max, y_min, z_min, z_max])
+            BBox_X_Min[id] = x_min
+            BBox_X_Max[id] = x_max
+            BBox_Y_Min[id] = y_min
+            BBox_Y_Max[id] = y_max
+            BBox_Z_Min[id] = z_min
+            BBox_Z_Max[id] = z_max
+            BBox_X[id] = x
+            BBox_Y[id] = y
+            BBox_Z[id] = z
+            Vec_X[id] = vec_x
+            Vec_Y[id] = vec_y
+            Vec_Z[id] = vec_z
 
             # Add bounding box to visualizer
             vis.add_geometry(bbox)
+
+        # write info to csv
+        for prev in prevBBs:
+            id = prev[0]
+            writer.writerow([id, BBox_X[id], BBox_Y[id], BBox_Z[id], Vec_X[id], Vec_Y[id], Vec_Z[id], 
+                             BBox_X_Min[id], BBox_X_Max[id], BBox_Y_Min[id], BBox_Y_Max[id], BBox_Z_Min[id], BBox_Z_Max[id]])
 
         csvfile.close()
 
@@ -189,9 +208,6 @@ def main():
     #                               front=[0.4257, -0.2125, -0.8795],
     #                               lookat=[2.6172, 2.0475, 1.532],
     #                               up=[-0.0694, -0.9768, 0.2024])
-
-def assignID(bbox):
-    pass
 
 def visualize_clusters(pcd, labels):
     # Visualize clustered dynamic objects
