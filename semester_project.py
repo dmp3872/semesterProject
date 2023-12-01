@@ -182,7 +182,8 @@ def main():
         # write info to csv
         for prev in prevBBs:
             id = prev[0]
-            writer.writerow([id, BBox_X[id], BBox_Y[id], BBox_Z[id], Vec_X[id], Vec_Y[id], Vec_Z[id], 
+            if id < 6:
+                writer.writerow([id, BBox_X[id], BBox_Y[id], BBox_Z[id], Vec_X[id], Vec_Y[id], Vec_Z[id], 
                              BBox_X_Min[id], BBox_X_Max[id], BBox_Y_Min[id], BBox_Y_Max[id], BBox_Z_Min[id], BBox_Z_Max[id]])
 
         csvfile.close()
