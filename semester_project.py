@@ -99,6 +99,9 @@ def main():
         BBox_Y_Max = len(unique_labels) * [0]
         BBox_Z_Min = len(unique_labels) * [0]
         BBox_Z_Max = len(unique_labels) * [0]
+        BBox_X = len(unique_labels) * [0]
+        BBox_Y = len(unique_labels) * [0]
+        BBox_Z = len(unique_labels) * [0]
 
         for label in unique_labels:
             cluster_indices = np.where(labels == label)[0]
@@ -121,6 +124,10 @@ def main():
             # Create bounding box geometry
             bbox = o3d.geometry.AxisAlignedBoundingBox(min_bound, max_bound)
             bbox.color = (1, 0, 0)  # Set color to red
+            x, y, z = bbox.get_center()
+            BBox_X[label] = x
+            BBox_Y[label] = y
+            BBox_Z[label] = z
 
             # Add bounding box to visualizer
             vis.add_geometry(bbox)
