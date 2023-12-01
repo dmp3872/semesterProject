@@ -93,12 +93,12 @@ def main():
         unique_labels = set(labels) - {-1}
         points = np.asarray(geometry.points)
 
-        BBox_X_Min = [0, 0, 0, 0, 0, 0]
-        BBox_X_Max = [0, 0, 0, 0, 0, 0]
-        BBox_Y_Min = [0, 0, 0, 0, 0, 0]
-        BBox_Y_Max = [0, 0, 0, 0, 0, 0]
-        BBox_Z_Min = [0, 0, 0, 0, 0, 0]
-        BBox_Z_Max = [0, 0, 0, 0, 0, 0]
+        BBox_X_Min = len(unique_labels) * [0]
+        BBox_X_Max = len(unique_labels) * [0]
+        BBox_Y_Min = len(unique_labels) * [0]
+        BBox_Y_Max = len(unique_labels) * [0]
+        BBox_Z_Min = len(unique_labels) * [0]
+        BBox_Z_Max = len(unique_labels) * [0]
 
         for label in unique_labels:
             cluster_indices = np.where(labels == label)[0]
