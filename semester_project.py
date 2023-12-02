@@ -1,7 +1,7 @@
 """
 File:           semester_project.py
 Authors:        Kellen Bell (kdb9520), Derek Pruski (dmp3872)
-Description:    TODO
+Description:    Implements an algorithm to find moving cars within the given point cloud dataset.
 """
 
 import open3d as o3d
