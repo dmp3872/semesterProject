@@ -91,6 +91,9 @@ def main():
         points = np.asarray(geometry.points)
 
         # set up writing the csvs for each frame
+        # make perception_results dir
+        if not os.path.exists('perception_results'):
+            os.makedirs('perception_results')
         csvfile =  open('perception_results\\frame_{0}.csv'.format(i), 'w', newline="")
         writer = csv.writer(csvfile)
         writer.writerow(["vehicle_id","position_x","position_y","position_z","mvec_x","mvec_y","mvec_z","bbox_x_min","bbox_x_max","bbox_y_min","bbox_y_max","bbox_z_min","bbox_z_max"])
